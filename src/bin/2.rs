@@ -1,142 +1,96 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 
-#[derive(Debug, Clone)]
-struct Round {
-    red: usize,
-    blue: usize,
-    green: usize,
+// Read file line by line and return reader
+fn read_file(filename: &str) -> io::Result<io::Lines<io::BufReader<File>>> {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
-impl Round {
-    fn new() -> Round {
-        Round {
-            red: 0,
-            blue: 0,
-            green: 0,
-        }
-    }
-}
+fn solution1(lines: io::Lines<io::BufReader<File>>) -> u32 {
+    const MAX_RED: u32 = 12;
+    const MAX_BLUE: u32 = 14;
+    const MAX_GREEN: u32 = 13;
 
-#[derive(Debug, Clone)]
-struct Game {
-    game_id: usize,
-    rounds: Vec<Round>,
-}
-impl Game {
-    fn new() -> Game {
-        Game {
-            game_id: 0,
-            rounds: Vec::new(),
-        }
-    }
-}
+    let mut res = 0;
 
-fn read_games_from_file(file_path: &str) -> io::Result<Vec<Game>> {
-    let file = File::open(file_path)?;
-    let reader = io::BufReader::new(file);
+    for line in lines {
+        let line = line.unwrap();
 
-    let mut games: Vec<Game> = Vec::new();
+        let (game_id, game) = line.trim_start_matches("Game ").split_once(":").unwrap();
+        let mut game_valid = true;
 
-    for line in reader.lines() {
-        let line = line?;
-        if let Some(colon_index) = line.find(':') {
-            // Ignore the input before ":"
-            let game_rounds_str = &line[colon_index + 1..].trim();
-            let game_id: usize = line[..colon_index]
-                .trim()
-                .trim_start_matches("Game ")
-                .parse()
-                .unwrap();
-            let mut game = Game::new();
-            game.game_id = game_id as usize;
-            // Split rounds using ";" as a delimiter
-            game.rounds = game_rounds_str
-                .split(';')
-                .map(|round_str| parse_round(round_str))
-                .collect();
-
-            // Add rounds to the vector of games
-            games.push(game);
-        }
-    }
-
-    Ok(games)
-}
-
-fn parse_round(round_str: &str) -> Round {
-    let mut round = Round::new();
-
-    for segment in round_str.split(',') {
-        let mut parts = segment.trim().split_whitespace();
-
-        if let Some(count_str) = parts.next() {
-            if let Some(color) = parts.next() {
+        for round_s in game.split(";") {
+            if !game_valid {
+                break;
+            }
+            for seg in round_s.split(", ") {
+                let (num, color) = seg.trim().split_once(" ").unwrap();
+                let num = num.parse::<u32>().unwrap();
                 match color {
-                    "red" => round.red += count_str.parse::<usize>().unwrap_or(0),
-                    "blue" => round.blue += count_str.parse::<usize>().unwrap_or(0),
-                    "green" => round.green += count_str.parse::<usize>().unwrap_or(0),
-                    _ => (),
+                    "red" if num > MAX_RED => {
+                        game_valid = false;
+                        break;
+                    }
+                    "blue" if num > MAX_BLUE => {
+                        game_valid = false;
+                        break;
+                    }
+                    "green" if num > MAX_GREEN => {
+                        game_valid = false;
+                        break;
+                    }
+                    _ => {}
                 }
             }
         }
+        if game_valid {
+            res += game_id.parse::<u32>().unwrap();
+        }
     }
-
-    round
+    res
 }
 
-fn solution1(games: &Vec<Game>) -> usize {
-    let max_vals = Round {
-        red: 12,
-        blue: 14,
-        green: 13,
-    };
-    let mut valid = 0;
+fn solution2(lines: io::Lines<io::BufReader<File>>) -> u32 {
+    let mut res = 0;
 
-    for game in games.iter() {
-        let mut is_valid = true;
-        for round in game.rounds.iter() {
-            if round.red > max_vals.red
-                || round.blue > max_vals.blue
-                || round.green > max_vals.green
-            {
-                is_valid = false;
-                break;
+    for line in lines {
+        let line = line.unwrap();
+
+        let game = line.trim_start_matches("Game ").split_once(":").unwrap().1;
+        let mut max_red = 0;
+        let mut max_blue = 0;
+        let mut max_green = 0;
+
+        for round_s in game.split(";") {
+            for seg in round_s.split(", ") {
+                let (num, color) = seg.trim().split_once(" ").unwrap();
+                let num = num.parse::<u32>().unwrap();
+                match color {
+                    "red" if num > max_red => {
+                        max_red = num;
+                    }
+                    "blue" if num > max_blue => {
+                        max_blue = num;
+                    }
+                    "green" if num > max_green => {
+                        max_green = num;
+                    }
+                    _ => {}
+                }
             }
         }
-        if is_valid {
-            valid += game.game_id;
-        }
+        res += max_red * max_blue * max_green;
     }
-    valid
-}
-
-fn solution2(games: &Vec<Game>) -> usize {
-    let mut total_power = 0;
-    for game in games.iter() {
-        let mut max_vals = Round::new();
-
-        for round in game.rounds.iter() {
-            if round.red > max_vals.red {
-                max_vals.red = round.red;
-            }
-            if round.blue > max_vals.blue {
-                max_vals.blue = round.blue;
-            }
-            if round.green > max_vals.green {
-                max_vals.green = round.green;
-            }
-        }
-        total_power += max_vals.red * max_vals.blue * max_vals.green;
-    }
-    total_power
+    res
 }
 
 fn main() {
-    let file_path = "data/2_1.txt";
-    let games = read_games_from_file(file_path).unwrap();
-    println!("Solution 1: {}", solution1(&games));
-    println!("Solution 2: {}", solution2(&games));
+    let sol1 = solution1(read_file("./data/2.txt").unwrap());
+    println!("Solution 1: {}", sol1);
+
+    let sol2 = solution2(read_file("./data/2.txt").unwrap());
+    println!("Solution 2: {}", sol2);
 }
 
 #[cfg(test)]
@@ -145,15 +99,13 @@ mod tests {
 
     #[test]
     fn test_solution1() {
-        let file_path = "data/2_t1.txt";
-        let games = read_games_from_file(file_path).unwrap();
-        assert_eq!(solution1(&games), 8);
+        let sol = solution1(read_file("./data/2t.txt").unwrap());
+        assert_eq!(sol, 8);
     }
 
     #[test]
     fn test_solution2() {
-        let file_path = "data/2_t1.txt";
-        let games = read_games_from_file(file_path).unwrap();
-        assert_eq!(solution2(&games), 2286);
+        let sol = solution2(read_file("./data/2t.txt").unwrap());
+        assert_eq!(sol, 2286);
     }
 }
