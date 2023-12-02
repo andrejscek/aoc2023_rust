@@ -4,10 +4,11 @@ use std::collections::BTreeMap;
 fn solution1(vec: &Vec<String>) -> u32 {
     let mut count: u32 = 0;
     for s in vec {
-        let first = s.chars().find(|c| c.is_numeric()).unwrap();
-        let last = s.chars().rev().find(|c| c.is_numeric()).unwrap();
-
-        let result = u32::from_str_radix(&format!("{first}{last}"), 10).unwrap_or(0);
+        let mut digits = s.chars().filter_map(|c| c.to_digit(10));
+        let first = digits.next().unwrap();
+        let last = digits.last().unwrap();
+        let result = first * 10 + last;
+        // println!("{} + {} = {}", first, last, result);
         count += result;
     }
     count
