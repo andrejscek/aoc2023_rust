@@ -4,11 +4,9 @@ use std::collections::BTreeMap;
 fn solution1(vec: &Vec<String>) -> u32 {
     let mut count: u32 = 0;
     for s in vec {
-        let mut digits = s.chars().filter_map(|c| c.to_digit(10));
-        let first = digits.next().unwrap();
-        let last = digits.last().unwrap();
-        let result = first * 10 + last;
-        // println!("{} + {} = {}", first, last, result);
+        let first = s.chars().find(|c| c.is_numeric()).unwrap();
+        let last = s.chars().rev().find(|c| c.is_numeric()).unwrap();
+        let result = u32::from_str_radix(&format!("{first}{last}"), 10).unwrap_or(0);
         count += result;
     }
     count
@@ -57,13 +55,13 @@ mod tests {
 
     #[test]
     fn test_solution1() {
-        let lines: Vec<String> = read_lines("./data/1_t1.txt").expect("wrong file path");
+        let lines: Vec<String> = read_lines("./data/1t1.txt").expect("wrong file path");
         assert_eq!(solution1(&lines), 142);
     }
 
     #[test]
     fn test_solution2() {
-        let lines: Vec<String> = read_lines("./data/1_t2.txt").expect("wrong file path");
+        let lines: Vec<String> = read_lines("./data/1t2.txt").expect("wrong file path");
         assert_eq!(solution2(&lines), 281);
     }
 }
