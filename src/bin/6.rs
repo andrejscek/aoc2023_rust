@@ -73,14 +73,13 @@ fn main() {
 mod tests {
     use super::*;
 
-    const CASE: &str = "Time:      7  15   30
-    Distance:  9  40  200";
+    const CASE: &str = r#"Time:      7  15   30
+    Distance:  9  40  200"#;
 
     #[test]
     fn test_solution1() {
         let sol = solution1(CASE);
         assert_eq!(sol, 288);
-        // assert_eq!(sol, 0);
     }
 
     #[test]
