@@ -110,6 +110,15 @@ fn score_first(a: &[u8], b: &[u8]) -> Ordering {
     Ordering::Equal
 }
 
+fn total_winnings(hands: Vec<Hand>) -> usize {
+    hands
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(x, y)| y.bid as usize * (x + 1))
+        .sum::<usize>()
+}
+
 fn solution1(s: &str) -> usize {
     let mut hands = parse(s, CARDS_P1);
 
@@ -123,12 +132,7 @@ fn solution1(s: &str) -> usize {
             a_score.cmp(&b_score)
         }
     });
-    hands
-        .iter()
-        .rev()
-        .enumerate()
-        .map(|(x, y)| y.bid as usize * (x + 1))
-        .sum::<usize>()
+    total_winnings(hands)
 }
 
 fn solution2(s: &str) -> usize {
@@ -144,13 +148,7 @@ fn solution2(s: &str) -> usize {
             a_score.cmp(&b_score)
         }
     });
-    hands
-        .iter()
-        .rev()
-        .enumerate()
-        .map(|(x, y)| y.bid as usize * (x + 1))
-        .sum::<usize>()
-        .into()
+    total_winnings(hands)
 }
 
 fn main() {
